@@ -1,0 +1,55 @@
+{
+	"$schema": "./node_modules/wrangler/config-schema.json",
+	"name": "tanebi",
+	"main": "worker/index.ts",
+	"compatibility_date": "2026-06-18",
+	"compatibility_flags": [
+		"nodejs_compat"
+	],
+	"observability": {
+		"enabled": true
+	},
+	"assets": {
+		"not_found_handling": "single-page-application",
+		"run_worker_first": [
+			"/api/*"
+		]
+	},
+	"ai": {
+		"binding": "AI"
+	},
+	"worker_loaders": [
+		{
+			"binding": "LOADER"
+		}
+	],
+	"ai_search_namespaces": [
+		{
+			"binding": "AI_SEARCH",
+			"namespace": "hidane-memory"
+		}
+	],
+	"d1_databases": [
+		{
+			"binding": "DB",
+			"database_name": "hidane",
+			"database_id": "<YOUR_DATABASE_ID>"
+		}
+	],
+	"durable_objects": {
+		"bindings": [
+			{
+				"name": "FLAME",
+				"class_name": "FlameSession"
+			}
+		]
+	},
+	"migrations": [
+		{
+			"tag": "v1",
+			"new_sqlite_classes": [
+				"FlameSession"
+			]
+		}
+	]
+}

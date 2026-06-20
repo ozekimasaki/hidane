@@ -1,0 +1,12 @@
+node_modules
+dist
+.wrangler
+.dev.vars
+worker-configuration.d.ts
+*.log
+.DS_Store
+*.tsbuildinfo
+.cursor
+.mf
+ChatGPT Image 2026年6月20日 15_29_50.png
+plan.md

@@ -1,0 +1,32 @@
+{
+  "name": "tanebi",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc -b && vite build",
+    "preview": "vite preview",
+    "deploy": "npm run build && wrangler deploy",
+    "cf-typegen": "wrangler types",
+    "test": "node --experimental-strip-types test/smoke.ts",
+    "db:migrate:local": "wrangler d1 migrations apply hidane --local",
+    "db:migrate:remote": "wrangler d1 migrations apply hidane --remote"
+  },
+  "dependencies": {
+    "gsap": "^3.15.0",
+    "hono": "^4.12.26",
+    "react": "^19.2.7",
+    "react-dom": "^19.2.7"
+  },
+  "devDependencies": {
+    "@cloudflare/vite-plugin": "^1.42.1",
+    "@cloudflare/workers-types": "^4.20260620.1",
+    "@types/react": "^19.2.17",
+    "@types/react-dom": "^19.2.3",
+    "@vitejs/plugin-react": "^6.0.2",
+    "typescript": "^6.0.3",
+    "vite": "^8.0.16",
+    "wrangler": "^4.103.0"
+  }
+}
