@@ -63,7 +63,7 @@ export async function executePreview(
         globalOutbound: null,
       }));
       // Send a clean request so no caller cookies/headers leak into the sandbox.
-      const sandboxedRequest = new Request("https://preview.tanebi.local/", { method: "GET" });
+      const sandboxedRequest = new Request("https://preview.hidane.local/", { method: "GET" });
       const result = await stub.getEntrypoint().fetch(sandboxedRequest);
       const body = await result.text();
       // Force our own headers/content-type; don't trust the generated worker's.

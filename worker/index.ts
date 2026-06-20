@@ -19,7 +19,7 @@ const USER_ID_RE = /^[A-Za-z0-9_-]{1,64}$/;
 app.get("/api/health", (c) =>
   c.json({
     ok: true,
-    service: "tanebi",
+    service: "hidane",
     bindings: {
       ai: Boolean(c.env.AI),
       loader: Boolean(c.env.LOADER),

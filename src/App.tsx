@@ -156,7 +156,7 @@ export default function App() {
         <div className="brand">
           <FlameIcon size={30} className="brand-icon" />
           <h1 className="title">
-            Tanebi<span className="title-jp">種火</span>
+            Hidane<span className="title-jp">ヒダネ</span>
           </h1>
         </div>
         <p className="subtitle">あなたの「作りたい」に、最初の火を。</p>

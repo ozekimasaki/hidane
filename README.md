@@ -1,4 +1,4 @@
-# 🔥 Tanebi（種火）
+# 🔥 Hidane（ヒダネ）
 
 > AI・プログラミング未経験者に「最初の火」を付ける Web アプリ。
 > 「作りたい」を入力するだけで、**すぐ動くアプリ**が生成・実行され、学びが**焚き火**として育っていきます。
@@ -130,7 +130,7 @@ npm run deploy   # tsc -b && vite build && wrangler deploy
 
 - AI Search の **名前空間** `hidane-memory` がアカウントに存在することをダッシュボードで確認してください。インスタンス（id: `hidane`）は初回利用時に自動作成します
 - Dynamic Workers と Workers AI の利用には **Workers Paid** プランが必要です
-- 内部リソース識別子（D1 名・AI Search 名前空間等）は旧名 `hidane` のまま。プロダクト名・Worker 名は `tanebi` です
+- プロダクト名・Worker 名・内部リソース（D1 / AI Search 名前空間等）はすべて `hidane` で統一
 
 ## 炎レベルの算出
 

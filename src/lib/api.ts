@@ -1,6 +1,6 @@
 import type { IgniteResponse, StateResponse } from "./types.ts";
 
-const USER_KEY = "tanebi-user-id";
+const USER_KEY = "hidane-user-id";
 
 export function getUserId(): string {
   let id = localStorage.getItem(USER_KEY);
