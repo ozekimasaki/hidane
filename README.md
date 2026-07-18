@@ -72,15 +72,19 @@ Worker 設定: `compatibility_date: "2026-06-18"`, `nodejs_compat`, Static Asset
 
 | メソッド | パス | 役割 |
 | --- | --- | --- |
-| POST | `/api/ignite` | 記憶取得 → 生成 → 実行 → 記憶追記 → 炎更新 |
+| POST | `/api/ignite` | 記憶取得 → 生成 → 実行 → 記憶追記 → 炎更新（`{ userId, wish }` を受け取る） |
 | GET | `/api/preview/:sessionId` | 生成コードのサンドボックス実行結果（iframe 用） |
-| GET | `/api/health` | ヘルスチェック |
+| GET | `/api/state/:userId` | ユーザーの炎状態・直近スナップショットを取得（リロード復元用） |
+| GET | `/api/health` | ヘルスチェック（各バインディングの有無を返す） |
+
+リクエストバリデーション: `userId` は `^[A-Za-z0-9_-]{1,64}$`、`wish` は 1〜500 文字。範囲外は `400`。
 
 ### コード生成
 
-- **主モデル**: `@cf/moonshotai/kimi-k2.7-code` — `response_format: { type: "json_schema" }` で `code`, `explanation`, `next_spark`, `concepts[]` を取得
+- **モデル**: `@cf/moonshotai/kimi-k2.7-code`（`worker/generate.ts` の `MODEL`）— `response_format: { type: "json_schema" }` で `code`, `explanation`, `next_spark`, `concepts[]` を取得
 - **生成物**: 自己完結 Worker モジュール（HTML/CSS/JS インライン、外部依存・ネットアクセスなし）
-- **バリデーション**: `export default` + `fetch` の簡易チェック → 失敗時は 1 回再生成
+- **バリデーション**: `export default` + `fetch` の簡易チェック（`isWorkerShaped`）
+- **再試行**: JSON パース/検証に失敗した場合は補正メッセージと低い temperature で **もう一度だけ** 同じモデルを呼び出し、それでも失敗すれば `fallback.ts` の決定的テンプレートを返す（結果は必ず 1 つ返る）
 
 ## ディレクトリ構成
 
@@ -102,15 +106,23 @@ migrations/0001_init.sql  D1 スキーマ
 test/smoke.ts             純粋ロジックのスモークテスト
 ```
 
+## 要件
+
+- **Node.js 22 以上**。Wrangler 4 は Node 22+ を必須とし、`@cloudflare/vite-plugin`（Vite 8）は `node:module` の `registerHooks` を使うため **Node 22.15+ / 24 を推奨**。`npm test` は `node --experimental-strip-types` を使うので Node 22+ が必要。
+- Cloudflare アカウント（デプロイ/実バインディング利用時）。Dynamic Workers と Workers AI には **Workers Paid** プランが必要。
+
 ## セットアップ & 開発
 
 ```bash
 npm install
-npm run cf-typegen   # wrangler.jsonc から型を生成（worker-configuration.d.ts）
+npm run cf-typegen   # wrangler.jsonc から型を生成（worker-configuration.d.ts、dev/build 前に必須）
 npx wrangler login   # 対話環境で一度だけ
 npm run dev          # Vite + Workers ランタイム（workerd）
+npm run build        # tsc -b（型チェック）+ vite build
 npm test             # 15 checks（炎計算・生成物検証など、workerd 非依存）
 ```
+
+型チェック単体は `npx tsc -b`（`tsconfig.json` が app / node / worker の 3 プロジェクトを参照）。専用のリンター設定は存在しない。
 
 `AI` / `AI_SEARCH` / `LOADER` バインディングはリモート（実 Cloudflare）に接続するため、ローカル開発には認証が必要です。認証が無い環境でも、Worker は各バインディングの有無を判定し、**オフラインのテンプレ生成 + 静的 HTML プレビュー + Durable Object 記憶**で動作するよう実装しています（AI 部分のみ縮退）。
 
@@ -154,7 +166,7 @@ band  = floor(frame / 4)                  // 0:火種 1:小炎 2:中炎 3:聖火
 **セキュリティ**
 
 - 生成コードは Dynamic Worker で実行し、`globalOutbound: null` でネットワークを完全遮断
-- プレビューは iframe（`sandbox="allow-scripts"`）に隔離。Cookie/ヘッダは渡さない
+- プレビューは iframe（`sandbox="allow-scripts"`）に隔離。`/api/preview` 応答にも CSP（`connect-src 'none'`、`sandbox allow-scripts` など）と `x-content-type-options: nosniff` を付与し、サンドボックスへは cookie/ヘッダを渡さない
 - 記憶はユーザー単位（AI Search は metadata + キー前缀、Durable Object は id 分離）
 - 生成コードの Worker 形バリデーション
 
@@ -162,10 +174,9 @@ band  = floor(frame / 4)                  // 0:火種 1:小炎 2:中炎 3:聖火
 
 | 障害 | 代替 |
 | --- | --- |
-| kimi 利用不可 | `glm-5.2` / `gpt-oss-120b` |
-| Dynamic Workers 未提供 | iframe `srcdoc` で静的 HTML 実行 |
+| `AI` バインディングなし / 生成失敗 | 同モデルを 1 回再試行し、それでもダメなら `fallback.ts` の決定的テンプレート |
+| Dynamic Workers（`LOADER`）未提供・実行失敗 | D1 に保存した静的 HTML を `/api/preview` から直接配信 |
 | AI Search 未提供 | Durable Object 内の直近メモ |
-| 生成失敗 | `fallback.ts` の決定的テンプレート |
 
 **採用しなかったもの**: 別途バックエンドサーバー、外部 DB（PostgreSQL 等）、フロント専用ホスティング、重い UI フレームワーク — すべて Cloudflare Workers 上で完結させるため。
 
@@ -177,3 +188,7 @@ band  = floor(frame / 4)                  // 0:火種 1:小炎 2:中炎 3:聖火
 - [Workers AI JSON mode](https://developers.cloudflare.com/workers-ai/features/json-mode/)
 - [Dynamic Workers](https://developers.cloudflare.com/dynamic-workers/)
 - [AI Search](https://developers.cloudflare.com/ai-search/)
+
+## ライセンス
+
+非公開プロジェクト（`package.json` に `"private": true`）で、リポジトリに LICENSE ファイルは含まれていません。
